@@ -1,0 +1,29 @@
+# 训练/爬取案例：小鹏 Mona L03（挂在通用 new_car 场景下）
+product_id: mona_l03
+product:
+  brand: 小鹏
+  series: Mona L03
+  aliases:
+    - MONA L03
+    - 小鹏Mona
+    - 小鹏L03
+    - MonaL03
+    - 莫娜L03
+    - 小鹏 Mona L03
+competitors:
+  - brand: 比亚迪
+    series: 秦PLUS
+  - brand: 吉利
+    series: 银河L6
+  - brand: 埃安
+    series: AION S
+keywords:
+  - 小鹏Mona L03
+  - Mona L03
+  - 小鹏L03
+  - MONA L03 试驾
+  - Mona L03 续航
+  - Mona L03 智驾
+# 可选：覆盖场景默认 crawl 限额
+# crawl:
+#   max_note_detail_per_run: 40

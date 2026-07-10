@@ -1,0 +1,5 @@
+{"item_id": "seed_pos_001", "title": "提车Mona L03一周", "body": "提车小鹏Mona L03一周，外观好看智驾好用，续航基本达标。", "gold": {"sentiment_polarity": "positive", "content_role": "owner_review", "opinion_risk": "low"}}
+{"item_id": "seed_neg_001", "title": "续航虚标", "body": "Mona L03表显续航虚标，高速掉电快，售后推诿，后悔了。", "gold": {"sentiment_polarity": "negative", "content_role": "owner_review", "opinion_risk": "mid"}}
+{"item_id": "seed_ad_001", "title": "现车优惠", "body": "小鹏Mona L03现车优惠，到店有礼，私信报价。", "gold": {"sentiment_polarity": "neutral", "content_role": "dealer_ad", "opinion_risk": "low"}}
+{"item_id": "seed_mix_001", "title": "对比秦PLUS", "body": "Mona L03智驾比秦PLUS强，但空间一般，价格还行。", "gold": {"sentiment_polarity": "mixed", "content_role": "prospect_research", "opinion_risk": "low"}}
+{"item_id": "seed_unrel_001", "title": "今日穿搭", "body": "今天穿搭分享，顺便提一句朋友买了Mona。", "gold": {"sentiment_polarity": "neutral", "content_role": "unrelated", "opinion_risk": "low"}}

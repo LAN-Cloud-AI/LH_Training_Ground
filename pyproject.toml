@@ -1,0 +1,26 @@
+[project]
+name = "csl-lab"
+version = "0.1.0"
+description = "LH Training Ground: XHS post-level sentiment lab with multi-industry scenarios and human-in-the-loop training."
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.27,<1",
+  "pydantic>=2,<3",
+  "PyYAML>=6,<7",
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.32,<1",
+]
+
+[project.scripts]
+csl-lab = "csl_lab.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

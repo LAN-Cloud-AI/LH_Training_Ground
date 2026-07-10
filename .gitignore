@@ -1,0 +1,15 @@
+.env
+.env.local
+data/**
+!data/.gitkeep
+gold/**/*.jsonl
+!gold/**/.gitkeep
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+*.pyc
+.DS_Store
+data/webapp/
+*.db

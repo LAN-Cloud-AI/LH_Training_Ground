@@ -1,0 +1,44 @@
+scenario_id: mona_l03_new_car
+platform: xiaohongshu
+skill_version: content_sentiment_mona_v0.1
+product:
+  brand: 小鹏
+  series: Mona L03
+  aliases:
+    - MONA L03
+    - 小鹏Mona
+    - 小鹏L03
+    - MonaL03
+    - 莫娜L03
+    - 小鹏 Mona L03
+competitors:
+  - brand: 比亚迪
+    series: 秦PLUS
+  - brand: 吉利
+    series: 银河L6
+  - brand: 埃安
+    series: AION S
+keywords:
+  - 小鹏Mona L03
+  - Mona L03
+  - 小鹏L03
+  - MONA L03 试驾
+  - Mona L03 续航
+  - Mona L03 智驾
+crawl:
+  max_search_pages_per_keyword: 2
+  max_note_detail_per_run: 40
+  require_note_detail: true
+  # 搜索失败或详情失败时是否仍用截断正文落盘（金标默认仍要求 body_complete）
+  keep_incomplete_body: true
+aspects:
+  - exterior
+  - driving
+  - range
+  - smart_drive
+  - price
+  - delivery
+  - service
+  - quality
+  - space
+  - competitor

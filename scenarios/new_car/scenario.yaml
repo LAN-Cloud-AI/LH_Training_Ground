@@ -1,0 +1,28 @@
+scenario_id: new_car
+display_name: 新车
+platform: xiaohongshu
+skill_version: content_sentiment_new_car_v0.4
+# 通用主机厂「新车」情感场景。具体车型通过 --product 注入（如 mona_l03）。
+# product / keywords / competitors 由 products/*.yaml 覆盖；此处仅作缺省占位。
+product:
+  brand: ""
+  series: ""
+  aliases: []
+competitors: []
+keywords: []
+crawl:
+  max_search_pages_per_keyword: 2
+  max_note_detail_per_run: 40
+  require_note_detail: true
+  keep_incomplete_body: true
+aspects:
+  - exterior
+  - driving
+  - range
+  - smart_drive
+  - price
+  - delivery
+  - service
+  - quality
+  - space
+  - competitor

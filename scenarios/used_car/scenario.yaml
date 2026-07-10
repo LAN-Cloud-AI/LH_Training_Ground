@@ -1,0 +1,28 @@
+scenario_id: used_car
+display_name: 二手车
+platform: xiaohongshu
+skill_version: content_sentiment_used_car_v0.1
+# 二手车行业情感/线索场景。具体车型通过 --product 注入。
+# product / keywords / competitors 由 products/*.yaml 覆盖；此处仅作缺省占位。
+product:
+  brand: ""
+  series: ""
+  aliases: []
+competitors: []
+keywords: []
+crawl:
+  max_search_pages_per_keyword: 2
+  max_note_detail_per_run: 40
+  require_note_detail: true
+  keep_incomplete_body: true
+aspects:
+  - exterior
+  - driving
+  - range
+  - smart_drive
+  - price
+  - delivery
+  - service
+  - quality
+  - space
+  - competitor

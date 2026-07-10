@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XHS Agent 测试台</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --line: #2c3845;
+      --text: #e7eef6;
+      --muted: #8b9aab;
+      --accent: #3d8bfd;
+      --ok: #3ecf8e;
+      --warn: #f0b429;
+      --bad: #f07178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Noto Sans SC", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1b2a3d, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 20px 24px 8px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 22px; letter-spacing: 0.02em; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .tabs {
+      display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap;
+    }
+    .tab {
+      background: transparent; border: 1px solid var(--line); color: var(--muted);
+      padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    }
+    .tab.active { color: var(--text); border-color: var(--accent); background: #1e2d42; }
+    main { padding: 16px 20px 40px; width: 100%; max-width: none; }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 12px;
+      width: 100%;
+      max-width: none;
+    }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; background: #101820; border: 1px solid var(--line); color: var(--text);
+      border-radius: 8px; padding: 10px 12px; font: inherit;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+    button {
+      background: var(--accent); color: white; border: 0; border-radius: 8px;
+      padding: 10px 14px; font: inherit; cursor: pointer;
+    }
+    button.secondary { background: #2a3644; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { font-size: 13px; color: var(--muted); white-space: pre-wrap; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; vertical-align: top; text-align: left; }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: #1a222c; }
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 220px);
+      margin-top: 12px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    #tab-judge table { min-width: 1500px; table-layout: fixed; width: 100%; }
+    #tab-judge th, #tab-judge td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+    }
+    #tab-judge th:nth-child(1), #tab-judge td:nth-child(1) { width: 11%; }
+    #tab-judge th:nth-child(2), #tab-judge td:nth-child(2) { width: 20%; }
+    #tab-judge th:nth-child(3), #tab-judge td:nth-child(3) {
+      width: 150px; min-width: 150px; max-width: 160px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #tab-judge th:nth-child(4), #tab-judge td:nth-child(4) {
+      width: 72px; min-width: 72px; max-width: 80px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #tab-judge th:nth-child(5),
+    #tab-judge th:nth-child(6),
+    #tab-judge th:nth-child(7),
+    #tab-judge td:nth-child(5),
+    #tab-judge td:nth-child(6),
+    #tab-judge td:nth-child(7) { width: 52px; text-align: right; white-space: nowrap; }
+    #tab-judge th:nth-child(8), #tab-judge td:nth-child(8) { width: 52px; white-space: nowrap; }
+    #tab-judge th:nth-child(9), #tab-judge td:nth-child(9) { width: 88px; white-space: nowrap; }
+    #tab-judge th:nth-child(10), #tab-judge td:nth-child(10) { width: 14%; }
+    #tab-judge th:nth-child(11), #tab-judge td:nth-child(11) { width: 7%; }
+    #tab-judge th:nth-child(12), #tab-judge td:nth-child(12) { width: 12%; }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px;
+      border: 1px solid var(--line);
+    }
+    .pill.yes { color: var(--ok); border-color: #2f6b4f; }
+    .pill.no { color: var(--warn); border-color: #6b5a2f; }
+    .switch {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px;
+    }
+    .switch input { width: auto; }
+    .muted { color: var(--muted); }
+    .body-cell { max-height: 120px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    .reason-cell { max-height: 120px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    a { color: #7eb6ff; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>XHS Agent 测试台</h1>
+      <p>域名测试环境 · 配置 / 爬取 / 判断与人工纠错 · 不写生产库</p>
+    </div>
+    <div class="status" id="health">检查服务…</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="config">配置</button>
+    <button class="tab" data-tab="crawl">爬取</button>
+    <button class="tab" data-tab="judge">判断 / 评论库</button>
+  </div>
+
+  <main>
+    <section id="tab-config" class="panel">
+      <div class="grid">
+        <div>
+          <label>TikHub API Token</label>
+          <input id="tikhub_token" type="password" placeholder="粘贴 token" />
+          <div class="muted" id="tikhub_mask" style="margin-top:6px;font-size:12px;"></div>
+        </div>
+        <div>
+          <label>DeepSeek API Key</label>
+          <input id="deepseek_key" type="password" placeholder="粘贴 key" />
+          <div class="muted" id="deepseek_mask" style="margin-top:6px;font-size:12px;"></div>
+        </div>
+        <div>
+          <label>DeepSeek 模型</label>
+          <select id="deepseek_model"></select>
+        </div>
+        <div>
+          <label>TikHub RPM</label>
+          <input id="tikhub_rpm" type="number" min="1" max="120" value="30" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="save_config">保存配置</button>
+        <span class="status" id="config_status"></span>
+      </div>
+    </section>
+
+    <section id="tab-crawl" class="panel hidden">
+      <div class="grid">
+        <div style="grid-column: 1 / -1;">
+          <label>场景（行业；可手填；不存在则自动新建）</label>
+          <input id="scenario_id" list="scenario_id_list" value="new_car" placeholder="如 new_car / used_car / 新能源" />
+          <datalist id="scenario_id_list"></datalist>
+          <div class="muted" id="scenario_hint" style="margin-top:6px;font-size:12px;"></div>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>关键词</label>
+          <input id="keyword" value="小鹏 l03 蹲销售" />
+        </div>
+        <div>
+          <label>最大搜索页数</label>
+          <input id="max_pages" type="number" min="1" max="50" value="10" />
+        </div>
+        <div>
+          <label>产品案例（可手填；不存在则自动新建）</label>
+          <input id="product_id" list="product_id_list" value="mona_l03" placeholder="如 mona_l03 / audi_a4l / 比亚迪汉" />
+          <datalist id="product_id_list"></datalist>
+          <div class="muted" id="product_hint" style="margin-top:6px;font-size:12px;"></div>
+        </div>
+        <div>
+          <label>补拉 note_detail</label>
+          <select id="fetch_detail">
+            <option value="true" selected>是（完整正文）</option>
+            <option value="false">否（仅搜索）</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <button id="start_crawl">开始爬取（只爬帖子，不爬评论）</button>
+        <button class="secondary" id="refresh_files">刷新帖子文件</button>
+        <span class="status" id="crawl_status"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>文件</th>
+              <th>场景</th>
+              <th>关键词</th>
+              <th>触发时间</th>
+              <th>爬取总条数</th>
+              <th>重复条数</th>
+              <th>新增条数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="files_body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-judge" class="panel hidden">
+      <div class="grid">
+        <div style="grid-column: 1 / -1;">
+          <label>帖子 JSONL 路径（爬取完成后自动填入，也可选手动）</label>
+          <input id="posts_path" placeholder="data/posts/xxx.jsonl" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="start_judge">开始判断并入库</button>
+        <button class="secondary" id="load_posts_preview">加载当前 JSONL</button>
+        <button class="secondary" id="reload_comments">刷新评论库</button>
+        <label class="switch"><input type="checkbox" id="edit_mode" /> 打开人工纠错</label>
+        <span class="status" id="judge_status"></span>
+      </div>
+      <div id="posts_summary" class="status muted" style="margin: 8px 0 12px; white-space: pre-wrap;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th>内容</th>
+              <th>发帖时间</th>
+              <th>城市</th>
+              <th>浏览</th>
+              <th>点赞</th>
+              <th>评论</th>
+              <th>原帖</th>
+              <th>Agent意向</th>
+              <th>判断理由</th>
+              <th>人工纠错</th>
+              <th>纠错理由</th>
+            </tr>
+          </thead>
+          <tbody id="comments_body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let pollTimer = null;
+    let tableMode = 'comments'; // comments | posts
+    let previewPath = '';
+
+    function showTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+      ['config','crawl','judge'].forEach(n => $(`tab-${n}`).classList.toggle('hidden', n !== name));
+    }
+    document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+
+    function setPostsPath(path, { preview = true } = {}) {
+      $('posts_path').value = path || '';
+      if (preview && path) {
+        loadPostsPreview(path).catch(e => {
+          $('posts_summary').textContent = String(e.message || e);
+          $('posts_summary').className = 'status err';
+        });
+      }
+    }
+
+    function formatApiError(data, fallback) {
+      const d = data && data.detail !== undefined ? data.detail : data && data.error;
+      if (d == null || d === '') return fallback || '请求失败';
+      if (typeof d === 'string') return d;
+      if (Array.isArray(d)) {
+        return d.map(item => {
+          if (typeof item === 'string') return item;
+          const loc = Array.isArray(item.loc) ? item.loc.filter(x => x !== 'body').join('.') : '';
+          const msg = item.msg || JSON.stringify(item);
+          return loc ? `${loc}: ${msg}` : msg;
+        }).join('; ');
+      }
+      if (typeof d === 'object') return d.msg || d.message || JSON.stringify(d);
+      return String(d);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        ...opts,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(formatApiError(data, res.statusText));
+      return data;
+    }
+
+    async function loadScenarios(preferred) {
+      const data = await api('/api/scenarios');
+      const list = $('scenario_id_list');
+      const input = $('scenario_id');
+      const metas = data.scenarios || [];
+      const current = (preferred || input.value || 'new_car').trim();
+      list.innerHTML = '';
+      const known = new Set();
+      metas.forEach(s => {
+        const sid = s.scenario_id || s;
+        const label = s.display_name ? `${sid}（${s.display_name}）` : sid;
+        const opt = document.createElement('option');
+        opt.value = sid;
+        opt.label = label;
+        list.appendChild(opt);
+        known.add(sid);
+      });
+      if (current) input.value = current;
+      const meta = metas.find(s => (s.scenario_id || s) === current);
+      $('scenario_hint').textContent = known.has(current)
+        ? `已有场景：${meta && meta.display_name ? meta.display_name + ' / ' : ''}${current}`
+        : (current ? `未找到「${current}」，爬取/判断时会自动新建骨架` : '可选手填新行业 ID 或中文名');
+      input.oninput = async () => {
+        const v = input.value.trim();
+        const m = metas.find(s => (s.scenario_id || s) === v);
+        $('scenario_hint').textContent = known.has(v)
+          ? `已有场景：${m && m.display_name ? m.display_name + ' / ' : ''}${v}`
+          : (v ? `未找到「${v}」，爬取/判断时会自动新建骨架` : '可选手填新行业 ID 或中文名');
+        await loadProducts();
+      };
+      input.onchange = () => loadProducts().catch(() => {});
+    }
+
+    async function ensureScenarioId() {
+      const raw = ($('scenario_id').value || '').trim();
+      if (!raw) throw new Error('请填写场景（行业）');
+      const data = await api('/api/scenarios/ensure', {
+        method: 'POST',
+        body: JSON.stringify({
+          scenario_id: raw,
+          display_name: raw,
+        }),
+      });
+      const sid = data.scenario_id || raw;
+      $('scenario_id').value = sid;
+      await loadScenarios(sid);
+      return sid;
+    }
+
+    async function loadProducts(preferred) {
+      const scenarioId = ($('scenario_id').value || 'new_car').trim() || 'new_car';
+      const data = await api(`/api/products?scenario_id=${encodeURIComponent(scenarioId)}`);
+      const list = $('product_id_list');
+      const input = $('product_id');
+      const current = (preferred || input.value || '').trim();
+      list.innerHTML = '';
+      (data.products || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        list.appendChild(opt);
+      });
+      if (current) input.value = current;
+      const known = new Set(data.products || []);
+      $('product_hint').textContent = known.has(current)
+        ? `已有配置：${current}`
+        : (current ? `未找到「${current}」，爬取/判断时会自动新建` : '可从下拉建议选择，或直接输入新 ID');
+      input.oninput = () => {
+        const v = input.value.trim();
+        $('product_hint').textContent = known.has(v)
+          ? `已有配置：${v}`
+          : (v ? `未找到「${v}」，爬取/判断时会自动新建` : '可从下拉建议选择，或直接输入新 ID');
+      };
+    }
+
+    async function ensureProductId() {
+      const raw = ($('product_id').value || '').trim();
+      if (!raw) throw new Error('请填写产品案例');
+      const scenarioId = await ensureScenarioId();
+      const data = await api('/api/products/ensure', {
+        method: 'POST',
+        body: JSON.stringify({
+          scenario_id: scenarioId,
+          product_id: raw,
+          keyword: ($('keyword').value || '').trim() || null,
+        }),
+      });
+      const pid = data.product_id || raw;
+      $('product_id').value = pid;
+      await loadProducts(pid);
+      return { scenarioId, productId: pid };
+    }
+
+    async function loadConfig() {
+      const cfg = await api('/api/config');
+      const sel = $('deepseek_model');
+      sel.innerHTML = '';
+      (cfg.deepseek_models || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        if (m === cfg.deepseek_model) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (cfg.deepseek_model && ![...sel.options].some(o => o.value === cfg.deepseek_model)) {
+        const opt = document.createElement('option');
+        opt.value = cfg.deepseek_model; opt.textContent = cfg.deepseek_model; opt.selected = true;
+        sel.appendChild(opt);
+      }
+      $('tikhub_rpm').value = cfg.tikhub_rpm || 30;
+      $('tikhub_mask').textContent = cfg.tikhub_api_token_set ? `已配置：${cfg.tikhub_api_token_masked}` : '未配置';
+      $('deepseek_mask').textContent = cfg.deepseek_api_key_set ? `已配置：${cfg.deepseek_api_key_masked}` : '未配置';
+    }
+
+    $('save_config').onclick = async () => {
+      $('config_status').textContent = '保存中…';
+      try {
+        const body = {
+          tikhub_rpm: Number($('tikhub_rpm').value || 30),
+          deepseek_model: $('deepseek_model').value,
+        };
+        if ($('tikhub_token').value.trim()) body.tikhub_api_token = $('tikhub_token').value.trim();
+        if ($('deepseek_key').value.trim()) body.deepseek_api_key = $('deepseek_key').value.trim();
+        await api('/api/config', { method: 'PUT', body: JSON.stringify(body) });
+        $('tikhub_token').value = '';
+        $('deepseek_key').value = '';
+        await loadConfig();
+        $('config_status').className = 'status ok';
+        $('config_status').textContent = '已保存';
+      } catch (e) {
+        $('config_status').className = 'status err';
+        $('config_status').textContent = String(e.message || e);
+      }
+    };
+
+    async function refreshFiles() {
+      const data = await api('/api/posts/files');
+      const tb = $('files_body');
+      tb.innerHTML = '';
+      (data.files || []).forEach(f => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td title="${escapeHtml(f.path || '')}">${escapeHtml(f.name || '')}</td>
+          <td>${escapeHtml(f.scenario_id || 'new_car')}</td>
+          <td title="${escapeHtml(f.keyword || '')}">${escapeHtml(f.keyword || '')}</td>
+          <td title="${escapeHtml(f.started_at || '')}">${escapeHtml(formatTime(f.started_at) || '')}</td>
+          <td>${f.hit_count ?? f.count ?? 0}</td>
+          <td>${f.duplicate_count ?? 0}</td>
+          <td>${f.new_count ?? f.count ?? 0}</td>
+          <td></td>`;
+        const btn = document.createElement('button');
+        btn.className = 'secondary';
+        btn.textContent = '用于判断';
+        btn.onclick = () => {
+          if (f.scenario_id) $('scenario_id').value = f.scenario_id;
+          setPostsPath(f.path, { preview: true });
+          showTab('judge');
+        };
+        tr.lastChild.appendChild(btn);
+        tb.appendChild(tr);
+      });
+    }
+    $('refresh_files').onclick = () => refreshFiles().catch(e => alert(e));
+
+    async function pollJob(jobId, statusEl, onDone) {
+      clearInterval(pollTimer);
+      statusEl.className = 'status';
+      pollTimer = setInterval(async () => {
+        try {
+          const job = await api(`/api/jobs/${jobId}`);
+          statusEl.textContent = `任务 ${job.status}\n${job.error || JSON.stringify(job.result || {}, null, 2)}`;
+          if (job.status === 'done') {
+            clearInterval(pollTimer);
+            statusEl.className = 'status ok';
+            onDone && onDone(job.result || {});
+          } else if (job.status === 'error') {
+            clearInterval(pollTimer);
+            statusEl.className = 'status err';
+          }
+        } catch (e) {
+          clearInterval(pollTimer);
+          statusEl.className = 'status err';
+          statusEl.textContent = String(e.message || e);
+        }
+      }, 1500);
+    }
+
+    $('start_crawl').onclick = async () => {
+      const statusEl = $('crawl_status');
+      statusEl.className = 'status';
+      statusEl.textContent = '提交爬取…';
+      try {
+        const { scenarioId, productId } = await ensureProductId();
+        const data = await api('/api/crawl', {
+          method: 'POST',
+          body: JSON.stringify({
+            keyword: $('keyword').value,
+            max_pages: Number($('max_pages').value || 10),
+            scenario_id: scenarioId,
+            product_id: productId,
+            fetch_detail: $('fetch_detail').value === 'true',
+          }),
+        });
+        pollJob(data.job_id, statusEl, async (result) => {
+          if (result.posts_path) {
+            setPostsPath(result.posts_path, { preview: false });
+          }
+          if (result.scenario_id) $('scenario_id').value = result.scenario_id;
+          await refreshFiles();
+          if (!result.post_count) {
+            statusEl.className = 'status err';
+            statusEl.textContent =
+              `任务 done，但帖子数为 0。\n` +
+              JSON.stringify(result, null, 2) +
+              `\n若刚出现网络超时，请再点一次「开始爬取」。`;
+          } else if (result.posts_path) {
+            showTab('judge');
+            await loadPostsPreview(result.posts_path);
+          }
+        });
+      } catch (e) {
+        statusEl.className = 'status err';
+        statusEl.textContent = String(e.message || e);
+      }
+    };
+
+    $('start_judge').onclick = async () => {
+      const statusEl = $('judge_status');
+      statusEl.className = 'status';
+      statusEl.textContent = '提交判断…';
+      try {
+        const { scenarioId, productId } = await ensureProductId();
+        const data = await api('/api/judge', {
+          method: 'POST',
+          body: JSON.stringify({
+            posts_path: $('posts_path').value,
+            scenario_id: scenarioId,
+            product_id: productId,
+          }),
+        });
+        pollJob(data.job_id, statusEl, async () => {
+          const path = $('posts_path').value.trim();
+          if (path) await loadPostsPreview(path);
+          else await loadComments();
+        });
+      } catch (e) {
+        statusEl.className = 'status err';
+        statusEl.textContent = String(e.message || e);
+      }
+    };
+
+    function intentPill(text) {
+      if (!text) return '<span class="muted">未判断</span>';
+      const cls = text === '有意向' ? 'yes' : 'no';
+      return `<span class="pill ${cls}">${text}</span>`;
+    }
+
+    function renderRows(items, { allowEdit = false } = {}) {
+      const edit = allowEdit && $('edit_mode').checked;
+      const tb = $('comments_body');
+      tb.innerHTML = '';
+      if (!items.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="12" class="muted">当前文件没有帖子（0 条）</td>`;
+        tb.appendChild(tr);
+        return;
+      }
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(item.title || '')}</td>
+          <td class="body-cell">${escapeHtml(item.body || '')}</td>
+          <td title="${escapeHtml(item.published_at || '')}">${escapeHtml(formatTime(item.published_at))}</td>
+          <td title="${escapeHtml(item.city || '')}">${escapeHtml(item.city || '')}</td>
+          <td>${item.view_count ?? ''}</td>
+          <td>${item.like_count ?? ''}</td>
+          <td>${item.comment_count ?? ''}</td>
+          <td>${item.canonical_url ? `<a href="${item.canonical_url}" target="_blank" rel="noopener">打开</a>` : ''}</td>
+          <td>${intentPill(item.agent_intent)}</td>
+          <td class="reason-cell">${escapeHtml(item.agent_reason || '')}</td>
+          <td class="corr-intent"></td>
+          <td class="corr-reason"></td>
+        `;
+        const intentCell = tr.querySelector('.corr-intent');
+        const reasonCell = tr.querySelector('.corr-reason');
+        if (edit && item.note_id) {
+          const sel = document.createElement('select');
+          ['', '有意向', '没意向'].forEach(v => {
+            const o = document.createElement('option');
+            o.value = v; o.textContent = v || '（不改）';
+            if ((item.human_correction || '') === v) o.selected = true;
+            sel.appendChild(o);
+          });
+          const reason = document.createElement('textarea');
+          reason.placeholder = '纠错理由';
+          reason.value = item.correction_reason || '';
+          const save = document.createElement('button');
+          save.textContent = '保存纠错';
+          save.className = 'secondary';
+          save.onclick = async () => {
+            if (!sel.value) return alert('请选择有意向/没意向');
+            try {
+              await api(`/api/comments/${encodeURIComponent(item.note_id)}/correction`, {
+                method: 'POST',
+                body: JSON.stringify({
+                  human_correction: sel.value,
+                  correction_reason: reason.value,
+                }),
+              });
+              if (tableMode === 'posts' && previewPath) await loadPostsPreview(previewPath);
+              else await loadComments();
+            } catch (e) {
+              alert(e.message || e);
+            }
+          };
+          intentCell.appendChild(sel);
+          reasonCell.appendChild(reason);
+          reasonCell.appendChild(document.createElement('br'));
+          reasonCell.appendChild(save);
+        } else {
+          intentCell.innerHTML = item.human_correction ? intentPill(item.human_correction) : '<span class="muted">-</span>';
+          reasonCell.textContent = item.correction_reason || '';
+        }
+        if (item.human_correction) {
+          tr.style.background = 'rgba(61,139,253,0.08)';
+        }
+        tb.appendChild(tr);
+      });
+    }
+
+    async function loadPostsPreview(path) {
+      const p = (path || $('posts_path').value || '').trim();
+      if (!p) throw new Error('请先选择帖子 JSONL 路径');
+      $('posts_summary').className = 'status muted';
+      $('posts_summary').textContent = '加载爬取结果…';
+      const data = await api(`/api/posts/preview?path=${encodeURIComponent(p)}&limit=500`);
+      tableMode = 'posts';
+      previewPath = data.path || p;
+      $('posts_path').value = previewPath;
+      const s = data.summary || {};
+      const lines = [
+        `当前文件：${data.name || previewPath}`,
+        `关键词：${s.keyword || '-'}`,
+        `触发时间：${formatTime(s.started_at) || s.started_at || '-'}`,
+        `爬取总条数：${s.hit_count ?? '-'}　重复：${s.duplicate_count ?? '-'}　新增：${s.new_count ?? data.count ?? 0}`,
+        `表格展示：${data.count} 条（已判断 ${data.judged_count || 0} 条；未判断显示为空）`,
+      ];
+      if (data.truncated) lines.push('提示：文件较大，仅预览前 500 条');
+      $('posts_summary').className = 'status ok';
+      $('posts_summary').textContent = lines.join('\n');
+      renderRows(data.items || [], { allowEdit: true });
+    }
+
+    async function loadComments() {
+      tableMode = 'comments';
+      previewPath = '';
+      const data = await api('/api/comments?limit=300');
+      $('posts_summary').className = 'status muted';
+      $('posts_summary').textContent =
+        `当前为评论库全量视图（已入库 ${data.count || 0} 条）。选择爬取 JSONL 后会切换为该文件预览。`;
+      renderRows(data.items || [], { allowEdit: true });
+    }
+    $('load_posts_preview').onclick = () => loadPostsPreview().catch(e => {
+      $('posts_summary').className = 'status err';
+      $('posts_summary').textContent = String(e.message || e);
+    });
+    $('reload_comments').onclick = () => loadComments().catch(e => alert(e));
+    $('edit_mode').onchange = () => {
+      if (tableMode === 'posts' && previewPath) loadPostsPreview(previewPath).catch(e => alert(e));
+      else loadComments().catch(e => alert(e));
+    };
+    $('posts_path').addEventListener('change', () => {
+      const p = $('posts_path').value.trim();
+      if (p) loadPostsPreview(p).catch(e => {
+        $('posts_summary').className = 'status err';
+        $('posts_summary').textContent = String(e.message || e);
+      });
+    });
+
+    function formatTime(s) {
+      if (!s) return '';
+      // 2026-07-09T07:17:17+00:00 / ...Z → 2026-07-09 07:17
+      const m = String(s).match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
+      if (m) return `${m[1]} ${m[2]}`;
+      return String(s);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    (async () => {
+      try {
+        const h = await api('/api/health');
+        $('health').className = 'status ok';
+        $('health').textContent = `服务正常 · ${h.service}`;
+      } catch (e) {
+        $('health').className = 'status err';
+        $('health').textContent = '服务不可用';
+      }
+      await loadConfig();
+      await loadScenarios();
+      await loadProducts();
+      await refreshFiles();
+      const initialPath = $('posts_path').value.trim();
+      if (initialPath) await loadPostsPreview(initialPath).catch(() => loadComments());
+      else await loadComments();
+    })();
+  </script>
+</body>
+</html>
