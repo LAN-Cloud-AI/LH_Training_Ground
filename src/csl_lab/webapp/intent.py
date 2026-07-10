@@ -96,6 +96,23 @@ _AD_HINTS = (
     "给想买车的朋友",
 )
 
+# 软营销/种草口吻：无真实求购动作时视为营销号，避免被 LLM 误标 prospect_research
+_SOFT_AD_HINTS = (
+    "没有女生能拒绝",
+    "没有人能拒绝",
+    "谁能拒绝",
+    "我真的忍不住了",
+    "忍不住了！",
+    "忍不住种草",
+    "种草了",
+    "安利给",
+    "安利一波",
+    "闭眼入",
+    "冲就完",
+    "颜值即正义",
+    "纯电轿跑吧",
+)
+
 
 def _text_has_completed_purchase(text: str) -> bool:
     if not text:
@@ -128,6 +145,13 @@ def _text_looks_like_ad(text: str) -> bool:
         return True
     if "试驾" in text and ("直降" in text or "值不值得冲" in text) and len(text) > 200:
         return True
+    # 软营销：有种草话术且无「蹲销售/询价」等真实求购信号 → 没意向
+    soft_hits = sum(1 for h in _SOFT_AD_HINTS if h in text)
+    has_buyer = any(h in text for h in _BUYER_HINTS)
+    if soft_hits >= 1 and not has_buyer:
+        return True
+    if soft_hits >= 2:
+        return True
     return False
 
 
@@ -146,7 +170,10 @@ def _map_new_car_intent(
     if _text_has_completed_purchase(text):
         return INTENT_NO, reason or "已订车/已提车/已购复盘，非待跟进线索，判为没意向。"
 
-    if role == "dealer_ad" or _text_looks_like_ad(text):
+    # 正文营销兜底优先于 LLM 角色：避免 prospect_research + 软种草 误成有意向
+    if _text_looks_like_ad(text):
+        return INTENT_NO, "经销商/营销种草帖，判为没意向。"
+    if role == "dealer_ad":
         return INTENT_NO, reason or "经销商/营销种草帖，判为没意向。"
 
     if role == "unrelated":
@@ -187,7 +214,9 @@ def _map_used_car_intent(
         return INTENT_NO, reason or "已订车/已提车/已购复盘，非待跟进线索，判为没意向。"
 
     # 3) 营销种草
-    if role == "dealer_ad" or _text_looks_like_ad(text):
+    if _text_looks_like_ad(text):
+        return INTENT_NO, "经销商/营销种草帖，判为没意向。"
+    if role == "dealer_ad":
         return INTENT_NO, reason or "经销商/营销种草帖，判为没意向。"
 
     if role == "media":

@@ -42,6 +42,21 @@ def test_marketing_seed_is_no_intent():
     assert intent == INTENT_NO
 
 
+def test_soft_marketing_seed_is_no_intent():
+    title = "樱珞粉小鹏MONA M03价格让我心动"
+    body = "完了，现在小鹏MONA M03的价格，我真的忍不住了！ 没有女生能拒绝这台樱珞粉纯电轿跑吧～ 续航"
+    intent, reason = _map(title, body, "prospect_research", polarity="positive")
+    assert intent == INTENT_NO
+    assert "营销" in reason or "种草" in reason or "经销商" in reason
+
+
+def test_soft_marketing_with_buyer_signal_is_yes():
+    title = "樱珞粉好看忍不住了"
+    body = "没有女生能拒绝这台车吧，求销售私我询价"
+    intent, _ = _map(title, body, "prospect_research", polarity="positive")
+    assert intent == INTENT_YES
+
+
 def test_used_car_and_post_purchase_are_no_intent():
     cases = [
         ("", "真心求够一辆22年帕萨特330豪华\n价格合适直接提", "prospect_research"),
