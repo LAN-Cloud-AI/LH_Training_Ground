@@ -16,6 +16,12 @@ from csl_lab.paths import (
     normalize_product_id,
     normalize_scenario_id,
 )
+from csl_lab.webapp.access_users import (
+    AccessUsersError,
+    add_access_email,
+    list_access_emails,
+    remove_access_email,
+)
 from csl_lab.webapp.config_store import load_config, public_config, save_config
 from csl_lab.webapp.db import apply_human_correction, init_db, list_comments
 from csl_lab.webapp.jobs import jobs
@@ -28,7 +34,7 @@ from csl_lab.webapp.services import (
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="XHS Agent Test Console", version="0.1.0")
+app = FastAPI(title="LeadsHunter Model Training Ground", version="0.1.0")
 
 
 @app.on_event("startup")
@@ -45,6 +51,12 @@ class ConfigUpdate(BaseModel):
     deepseek_api_key: str | None = None
     deepseek_model: str | None = None
     deepseek_base_url: str | None = None
+    cloudflare_api_token: str | None = None
+    cf_access_team_domain: str | None = None
+
+
+class AccessEmailRequest(BaseModel):
+    email: str
 
 
 class CrawlRequest(BaseModel):
@@ -82,7 +94,7 @@ class ProductEnsureRequest(BaseModel):
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "xhs-agent-test"}
+    return {"status": "ok", "service": "leadshunter-training-ground"}
 
 
 @app.get("/api/config")
@@ -234,6 +246,34 @@ def post_correction(note_id: str, body: CorrectionRequest) -> dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     return row
+
+
+@app.get("/api/access/users")
+def get_access_users() -> dict[str, Any]:
+    try:
+        return list_access_emails()
+    except AccessUsersError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/access/users")
+def post_access_user(body: AccessEmailRequest) -> dict[str, Any]:
+    try:
+        return add_access_email(body.email)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except AccessUsersError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.delete("/api/access/users")
+def delete_access_user(body: AccessEmailRequest) -> dict[str, Any]:
+    try:
+        return remove_access_email(body.email)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except AccessUsersError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/")

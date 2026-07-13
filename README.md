@@ -1,12 +1,12 @@
-# LH Training Ground
+# LeadsHunter模型训练场
 
-小红书**帖子级情感**训练场（原 `content_sentiment_lab`），从 LeadsHunter / LH_evaluation_agent 中独立出来的公开仓库。
+**LeadsHunter Model Training Ground** — 小红书帖子级情感 / 线索意向训练场（原 `content_sentiment_lab`），从 LeadsHunter / LH_evaluation_agent 中独立出来的公开仓库。
 
 - **仓库**：[LAN-Cloud-AI/LH_Training_Ground](https://github.com/LAN-Cloud-AI/LH_Training_Ground)
 - **关联私有仓**：
   - [LAN-Cloud-AI/leadsHunter](https://github.com/LAN-Cloud-AI/leadsHunter)
   - [LAN-Cloud-AI/LH_evaluation_agent](https://github.com/LAN-Cloud-AI/LH_evaluation_agent)
-- **测试台**：https://xhs_agent_test.41box.com （本地 `127.0.0.1:8791`）
+- **训练场控制台**：https://xhs_agent_test.41box.com （本地 `127.0.0.1:8791`）
 
 方案背景见 leadsHunter 文档 `docs/task16-小红书帖子级情感分析-技术方案.md`。
 
@@ -23,7 +23,7 @@
 - `used_car`（二手车）：二手求购/收车为有效潜客；排除新车蹲销售/提新车
 
 换一款车：复制 `products/mona_l03.yaml` → `products/your_model.yaml`，改品牌/车系/关键词即可，**不必改 skill**。  
-新增行业：在测试台爬取页手填场景 ID/中文名，或调用 `POST /api/scenarios/ensure`；也可手动建 `scenarios/{id}/`。
+新增行业：在控制台爬取页手填场景 ID/中文名，或调用 `POST /api/scenarios/ensure`；也可手动建 `scenarios/{id}/`。
 
 ## 能力
 
@@ -75,6 +75,22 @@ Web 控制台：
 ## 人审
 
 见 `review/human_review_schema.md`。金标建议落 `gold/new_car/v001/`。
+
+## 同步到生产 Agent（LeadsHunter）
+
+训练场 skill **不会自动**进入生产。正式方案：
+
+1. bump `scenarios/{id}/scenario.yaml` 的 `skill_version`
+2. `python scripts/export_skill.py <scenario_id> --target post --out /tmp/xxx.json`
+3. 在 `LH_evaluation_agent` 执行 `python scripts/import_skill.py --manifest /tmp/xxx.json`
+4. 提交 Agent 仓并在阿里云经 `crawler-launcher` 重建 `agent-api` / `agent-worker`
+
+完整步骤、版本策略、意向映射同步与验证清单见 leadsHunter 文档：
+
+[`docs/训练场skill接入生产-流程.md`](https://github.com/LAN-Cloud-AI/leadsHunter/blob/main/docs/%E8%AE%AD%E7%BB%83%E5%9C%BAskill%E6%8E%A5%E5%85%A5%E7%94%9F%E4%BA%A7-%E6%B5%81%E7%A8%8B.md)
+（本地：`/Users/i/myCode/leadsHunter/docs/训练场skill接入生产-流程.md`）
+
+若改了 `src/csl_lab/webapp/intent.py` 启发式，还需手工对齐生产 `agent/src/lh_agent/post_intent.py`。
 
 ## 测试
 

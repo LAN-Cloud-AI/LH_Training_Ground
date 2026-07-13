@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>XHS Agent 测试台</title>
+  <title>LeadsHunter模型训练场</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -33,8 +33,25 @@
       gap: 16px;
       flex-wrap: wrap;
     }
-    header h1 { margin: 0; font-size: 22px; letter-spacing: 0.02em; }
-    header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    header .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    header .logout-btn {
+      background: #2a3644;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    header .logout-btn:hover { border-color: var(--accent); }
     .tabs {
       display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap;
     }
@@ -128,14 +145,18 @@
 <body>
   <header>
     <div>
-      <h1>XHS Agent 测试台</h1>
-      <p>域名测试环境 · 配置 / 爬取 / 判断与人工纠错 · 不写生产库</p>
+      <h1>LeadsHunter模型训练场</h1>
+      <p>LeadsHunter Model Training Ground · 配置 / 爬取 / 判断与人工纠错 · 不写生产库</p>
     </div>
-    <div class="status" id="health">检查服务…</div>
+    <div class="header-right">
+      <div class="status" id="health">检查服务…</div>
+      <button type="button" class="logout-btn" id="logout_btn" title="退出 Cloudflare Access 登录">登出</button>
+    </div>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-tab="config">配置</button>
+    <button class="tab" data-tab="users">用户管理</button>
     <button class="tab" data-tab="crawl">爬取</button>
     <button class="tab" data-tab="judge">判断 / 评论库</button>
   </div>
@@ -161,10 +182,38 @@
           <label>TikHub RPM</label>
           <input id="tikhub_rpm" type="number" min="1" max="120" value="30" />
         </div>
+        <div>
+          <label>Cloudflare API Token（用户管理 / Access）</label>
+          <input id="cloudflare_token" type="password" placeholder="粘贴 Access 权限 token" />
+          <div class="muted" id="cloudflare_mask" style="margin-top:6px;font-size:12px;"></div>
+        </div>
       </div>
       <div class="row">
         <button id="save_config">保存配置</button>
         <span class="status" id="config_status"></span>
+      </div>
+    </section>
+
+    <section id="tab-users" class="panel hidden">
+      <p class="muted" style="margin-top:0;">
+        管理 Cloudflare Access 允许登录的邮箱（同步更新训练场应用 + App Launcher）。
+      </p>
+      <div class="row" style="margin-top:0;">
+        <input id="access_email" type="email" placeholder="colleague@example.com" style="max-width:320px;" />
+        <button id="add_access_email">添加邮箱</button>
+        <button class="secondary" id="refresh_access_users">刷新</button>
+        <span class="status" id="users_status"></span>
+      </div>
+      <div class="table-wrap" style="max-height:420px;">
+        <table>
+          <thead>
+            <tr>
+              <th>邮箱</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="access_users_body"></tbody>
+        </table>
       </div>
     </section>
 
@@ -266,10 +315,35 @@
     let pollTimer = null;
     let tableMode = 'comments'; // comments | posts
     let previewPath = '';
+    let currentItems = [];
+    let focusNoteId = null;
+
+    function commentsTableWrap() {
+      return document.querySelector('#tab-judge .table-wrap');
+    }
+
+    function captureTableScroll() {
+      const el = commentsTableWrap();
+      return el ? el.scrollTop : 0;
+    }
+
+    function restoreTableScroll(scrollTop, noteId) {
+      requestAnimationFrame(() => {
+        const el = commentsTableWrap();
+        if (el) el.scrollTop = scrollTop;
+        if (!noteId) return;
+        const row = document.querySelector(`#comments_body tr[data-note-id="${CSS.escape(noteId)}"]`);
+        if (row) row.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      });
+    }
 
     function showTab(name) {
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-      ['config','crawl','judge'].forEach(n => $(`tab-${n}`).classList.toggle('hidden', n !== name));
+      ['config','users','crawl','judge'].forEach(n => $(`tab-${n}`).classList.toggle('hidden', n !== name));
+      if (name === 'users') loadAccessUsers().catch(e => {
+        $('users_status').className = 'status err';
+        $('users_status').textContent = String(e.message || e);
+      });
     }
     document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
 
@@ -419,7 +493,23 @@
       $('tikhub_rpm').value = cfg.tikhub_rpm || 30;
       $('tikhub_mask').textContent = cfg.tikhub_api_token_set ? `已配置：${cfg.tikhub_api_token_masked}` : '未配置';
       $('deepseek_mask').textContent = cfg.deepseek_api_key_set ? `已配置：${cfg.deepseek_api_key_masked}` : '未配置';
+      $('cloudflare_mask').textContent = cfg.cloudflare_api_token_set
+        ? `已配置：${cfg.cloudflare_api_token_masked}`
+        : '未配置（用户管理需要）';
+      if (cfg.cf_access_team_domain) {
+        window.__cfAccessTeamDomain = cfg.cf_access_team_domain;
+      }
     }
+
+    $('logout_btn').onclick = () => {
+      const team = window.__cfAccessTeamDomain || 'long-sky-131d.cloudflareaccess.com';
+      // 优先走当前应用域名的 Access logout；本机直连时回落到 team 域
+      const onAccessHost = !/^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
+      const url = onAccessHost
+        ? `${location.origin}/cdn-cgi/access/logout`
+        : `https://${team}/cdn-cgi/access/logout`;
+      location.href = url;
+    };
 
     $('save_config').onclick = async () => {
       $('config_status').textContent = '保存中…';
@@ -430,15 +520,89 @@
         };
         if ($('tikhub_token').value.trim()) body.tikhub_api_token = $('tikhub_token').value.trim();
         if ($('deepseek_key').value.trim()) body.deepseek_api_key = $('deepseek_key').value.trim();
+        if ($('cloudflare_token').value.trim()) body.cloudflare_api_token = $('cloudflare_token').value.trim();
         await api('/api/config', { method: 'PUT', body: JSON.stringify(body) });
         $('tikhub_token').value = '';
         $('deepseek_key').value = '';
+        $('cloudflare_token').value = '';
         await loadConfig();
         $('config_status').className = 'status ok';
         $('config_status').textContent = '已保存';
       } catch (e) {
         $('config_status').className = 'status err';
         $('config_status').textContent = String(e.message || e);
+      }
+    };
+
+    async function loadAccessUsers() {
+      const statusEl = $('users_status');
+      statusEl.className = 'status';
+      statusEl.textContent = '加载中…';
+      const data = await api('/api/access/users');
+      const tb = $('access_users_body');
+      tb.innerHTML = '';
+      (data.emails || []).forEach(email => {
+        const tr = document.createElement('tr');
+        const tdEmail = document.createElement('td');
+        tdEmail.textContent = email;
+        const tdAct = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'secondary';
+        btn.textContent = '移除';
+        btn.onclick = async () => {
+          if (!confirm(`确认从 Access 移除 ${email}？`)) return;
+          try {
+            statusEl.className = 'status';
+            statusEl.textContent = '移除中…';
+            await api('/api/access/users', {
+              method: 'DELETE',
+              body: JSON.stringify({ email }),
+            });
+            await loadAccessUsers();
+          } catch (e) {
+            statusEl.className = 'status err';
+            statusEl.textContent = String(e.message || e);
+          }
+        };
+        tdAct.appendChild(btn);
+        tr.appendChild(tdEmail);
+        tr.appendChild(tdAct);
+        tb.appendChild(tr);
+      });
+      if (!(data.emails || []).length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="2" class="muted">暂无允许邮箱</td>';
+        tb.appendChild(tr);
+      }
+      statusEl.className = 'status ok';
+      statusEl.textContent = `共 ${data.count || 0} 个邮箱 · team ${data.team_domain || ''}`;
+    }
+
+    $('refresh_access_users').onclick = () => loadAccessUsers().catch(e => {
+      $('users_status').className = 'status err';
+      $('users_status').textContent = String(e.message || e);
+    });
+
+    $('add_access_email').onclick = async () => {
+      const statusEl = $('users_status');
+      const email = ($('access_email').value || '').trim();
+      if (!email) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '请填写邮箱';
+        return;
+      }
+      try {
+        statusEl.className = 'status';
+        statusEl.textContent = '添加中…';
+        await api('/api/access/users', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        });
+        $('access_email').value = '';
+        await loadAccessUsers();
+      } catch (e) {
+        statusEl.className = 'status err';
+        statusEl.textContent = String(e.message || e);
       }
     };
 
@@ -565,17 +729,23 @@
     }
 
     function renderRows(items, { allowEdit = false } = {}) {
+      currentItems = items;
       const edit = allowEdit && $('edit_mode').checked;
+      const scrollTop = captureTableScroll();
+      const keepNoteId = focusNoteId;
       const tb = $('comments_body');
       tb.innerHTML = '';
       if (!items.length) {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td colspan="12" class="muted">当前文件没有帖子（0 条）</td>`;
         tb.appendChild(tr);
+        restoreTableScroll(scrollTop, keepNoteId);
+        focusNoteId = null;
         return;
       }
       items.forEach(item => {
         const tr = document.createElement('tr');
+        if (item.note_id) tr.dataset.noteId = item.note_id;
         tr.innerHTML = `
           <td>${escapeHtml(item.title || '')}</td>
           <td class="body-cell">${escapeHtml(item.body || '')}</td>
@@ -616,8 +786,16 @@
                   correction_reason: reason.value,
                 }),
               });
-              if (tableMode === 'posts' && previewPath) await loadPostsPreview(previewPath);
-              else await loadComments();
+              const idx = currentItems.findIndex(x => x.note_id === item.note_id);
+              if (idx >= 0) {
+                currentItems[idx] = {
+                  ...currentItems[idx],
+                  human_correction: sel.value,
+                  correction_reason: reason.value,
+                };
+              }
+              focusNoteId = item.note_id;
+              renderRows(currentItems, { allowEdit: true });
             } catch (e) {
               alert(e.message || e);
             }
@@ -633,8 +811,14 @@
         if (item.human_correction) {
           tr.style.background = 'rgba(61,139,253,0.08)';
         }
+        if (keepNoteId && item.note_id === keepNoteId) {
+          tr.style.outline = '2px solid rgba(61,139,253,0.55)';
+          tr.style.outlineOffset = '-2px';
+        }
         tb.appendChild(tr);
       });
+      restoreTableScroll(scrollTop, keepNoteId);
+      focusNoteId = null;
     }
 
     async function loadPostsPreview(path) {
@@ -675,8 +859,8 @@
     });
     $('reload_comments').onclick = () => loadComments().catch(e => alert(e));
     $('edit_mode').onchange = () => {
-      if (tableMode === 'posts' && previewPath) loadPostsPreview(previewPath).catch(e => alert(e));
-      else loadComments().catch(e => alert(e));
+      // 只切换编辑控件，不重拉列表，避免滚动位置丢失、纠错行被顶到最前
+      renderRows(currentItems, { allowEdit: true });
     };
     $('posts_path').addEventListener('change', () => {
       const p = $('posts_path').value.trim();

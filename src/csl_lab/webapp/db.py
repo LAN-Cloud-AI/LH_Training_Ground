@@ -138,12 +138,13 @@ def list_comments(
 ) -> list[dict[str, Any]]:
     conn = connect()
     try:
+        # 按发帖/入库时间稳定排序，避免人工纠错更新 updated_at 后行被顶到列表最前
         if scenario_id:
             cur = conn.execute(
                 """
                 SELECT * FROM comments
                 WHERE COALESCE(scenario_id, 'new_car') = ?
-                ORDER BY updated_at DESC
+                ORDER BY COALESCE(published_at, created_at) DESC, note_id DESC
                 LIMIT ? OFFSET ?
                 """,
                 (scenario_id, limit, offset),
@@ -152,7 +153,7 @@ def list_comments(
             cur = conn.execute(
                 """
                 SELECT * FROM comments
-                ORDER BY updated_at DESC
+                ORDER BY COALESCE(published_at, created_at) DESC, note_id DESC
                 LIMIT ? OFFSET ?
                 """,
                 (limit, offset),

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start XHS Agent test web console on 127.0.0.1:8791
+# Start LeadsHunter Model Training Ground web console on 127.0.0.1:8791
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

@@ -45,6 +45,10 @@ def load_config() -> dict[str, Any]:
         )
     if not data.get("tikhub_base_url"):
         data["tikhub_base_url"] = os.getenv("TIKHUB_BASE_URL", "https://api.tikhub.io")
+    if not data.get("cloudflare_api_token"):
+        data["cloudflare_api_token"] = (
+            os.getenv("CLOUDFLARE_API_TOKEN") or os.getenv("CF_API_TOKEN") or ""
+        )
     data.setdefault("tikhub_rpm", int(os.getenv("TIKHUB_RPM", "30") or 30))
     return data
 
@@ -58,6 +62,13 @@ def save_config(patch: dict[str, Any]) -> dict[str, Any]:
         "deepseek_api_key",
         "deepseek_model",
         "deepseek_base_url",
+        "cloudflare_api_token",
+        "cf_access_account_id",
+        "cf_access_training_app_id",
+        "cf_access_training_policy_id",
+        "cf_access_launcher_app_id",
+        "cf_access_launcher_policy_id",
+        "cf_access_team_domain",
     ):
         if key in patch and patch[key] is not None:
             # 空字符串表示清空；带 … 的掩码不覆盖
@@ -76,6 +87,8 @@ def save_config(patch: dict[str, Any]) -> dict[str, Any]:
         os.environ["DEEPSEEK_API_KEY"] = str(current["deepseek_api_key"])
     if current.get("deepseek_model"):
         os.environ["CSL_LLM_MODEL"] = str(current["deepseek_model"])
+    if current.get("cloudflare_api_token"):
+        os.environ["CLOUDFLARE_API_TOKEN"] = str(current["cloudflare_api_token"])
     return current
 
 
@@ -91,4 +104,18 @@ def public_config() -> dict[str, Any]:
         "deepseek_model": cfg.get("deepseek_model"),
         "deepseek_base_url": cfg.get("deepseek_base_url"),
         "deepseek_models": DEEPSEEK_MODELS,
+        "cloudflare_api_token_set": bool(
+            cfg.get("cloudflare_api_token")
+            or os.getenv("CLOUDFLARE_API_TOKEN")
+            or os.getenv("CF_API_TOKEN")
+        ),
+        "cloudflare_api_token_masked": _mask(
+            cfg.get("cloudflare_api_token")
+            or os.getenv("CLOUDFLARE_API_TOKEN")
+            or os.getenv("CF_API_TOKEN")
+            or ""
+        ),
+        "cf_access_team_domain": cfg.get("cf_access_team_domain")
+        or os.getenv("CF_ACCESS_TEAM_DOMAIN")
+        or "long-sky-131d.cloudflareaccess.com",
     }

@@ -1,7 +1,7 @@
 [project]
 name = "csl-lab"
 version = "0.1.0"
-description = "LH Training Ground: XHS post-level sentiment lab with multi-industry scenarios and human-in-the-loop training."
+description = "LeadsHunter Model Training Ground: multi-industry post-level sentiment lab with human-in-the-loop training."
 requires-python = ">=3.11"
 dependencies = [
   "httpx>=0.27,<1",
