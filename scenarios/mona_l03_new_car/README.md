@@ -1,3 +1,10 @@
+---
+title: 已迁移：请使用通用新车场景 + 产品案例
+type: reference
+status: archived
+owner: Kaison
+updated: 2026-07-01
+---
 # 已迁移：请使用通用新车场景 + 产品案例
 
 本目录保留仅为兼容旧命令：

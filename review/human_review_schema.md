@@ -1,3 +1,12 @@
+---
+title: 人审产物格式（金标）
+type: contract
+status: current
+owner: Kaison
+updated: 2026-08-01
+related:
+  - README.md
+---
 # 人审产物格式（金标）
 
 每条金标一行 JSON（JSONL），建议路径：`gold/new_car/vNNN/items.jsonl`（按**通用新车**场景沉淀，便于跨车型复用）。

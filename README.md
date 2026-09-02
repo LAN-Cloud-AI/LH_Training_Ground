@@ -1,3 +1,14 @@
+---
+title: LeadsHunter模型训练场
+type: overview
+status: current
+owner: Kaison
+updated: 2026-08-01
+related:
+  - docs/运行手册.md
+  - docs/webapp.md
+  - review/human_review_schema.md
+---
 # LeadsHunter模型训练场
 
 **LeadsHunter Model Training Ground** — 小红书帖子级情感 / 线索意向训练场（原 `content_sentiment_lab`），从 LeadsHunter / LH_evaluation_agent 中独立出来的公开仓库。
