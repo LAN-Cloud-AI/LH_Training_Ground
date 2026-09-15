@@ -1,3 +1,12 @@
+---
+title: LeadsHunter模型训练场 · Web 控制台
+type: guide
+status: current
+owner: Kaison
+updated: 2026-08-01
+related:
+  - README.md
+---
 # LeadsHunter模型训练场 · Web 控制台
 
 公网域名：**https://xhs_agent_test.41box.com**（已套 **Cloudflare Access**）
