@@ -114,4 +114,4 @@ pytest -q
 
 候选源码在 `beta` 分支提交，保留 `main` 的正式集成边界。GitHub Actions 在 push、PR、手动触发时运行完整 `pytest` 和启动脚本语法检查，按 `pyproject.toml` 缓存 pip 下载；非标签的过时运行可取消，发行标签运行保留。
 
-本项目组件独立于 Earth 产品版本。本轮候选版本为 `1.1.0-beta.1`，对应 Python PEP 440 包版本 `1.1.0b1`；通过候选提交 CI 后，以 `training-ground-v1.1.0-beta.1` 创建预发布。历史 `training-ground-v1.0.0` 标签对应的包元数据实际为 `0.1.0`，该历史标签保持不变，不以当前版本替代历史记录。
+本项目组件独立于 Earth 产品版本。本轮候选版本为 `1.1.0-beta.2`，对应 Python PEP 440 包版本 `1.1.0b2`；通过候选提交 CI 后，以 `training-ground-v1.1.0-beta.2` 创建预发布。历史 `training-ground-v1.0.0` 标签对应的包元数据实际为 `0.1.0`，该历史标签保持不变，不以当前版本替代历史记录。

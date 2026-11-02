@@ -29,3 +29,12 @@ def test_release_version_matches_package_and_api():
 def test_release_tag_matches_candidate_when_running_on_a_tag():
     if os.environ.get("GITHUB_REF_TYPE") == "tag":
         assert os.environ.get("GITHUB_REF_NAME") == f"training-ground-v{RELEASE_VERSION}"
+
+
+def test_runtime_anyio_is_patched():
+    installed = tuple(int(part) for part in version("anyio").split(".")[:3])
+    lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    locked_version = next(package["version"] for package in lock["package"] if package["name"] == "anyio")
+    locked = tuple(int(part) for part in locked_version.split(".")[:3])
+    assert (4, 14, 2) <= installed < (5, 0, 0)
+    assert (4, 14, 2) <= locked < (5, 0, 0)
