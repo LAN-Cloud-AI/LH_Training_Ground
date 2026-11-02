@@ -16,6 +16,7 @@ from csl_lab.paths import (
     normalize_product_id,
     normalize_scenario_id,
 )
+from csl_lab.version import RELEASE_VERSION
 from csl_lab.webapp.access_users import (
     AccessUsersError,
     add_access_email,
@@ -34,7 +35,7 @@ from csl_lab.webapp.services import (
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="LeadsHunter Model Training Ground", version="0.1.0")
+app = FastAPI(title="LeadsHunter Model Training Ground", version=RELEASE_VERSION)
 
 
 @app.on_event("startup")
