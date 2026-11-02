@@ -138,6 +138,7 @@ def crawl_scenario(
                 page=page,
                 notes=len(notes),
                 http_status=resp.get("http_status"),
+                meta=resp.get("meta"), raw_body=body, cache_url=resp.get("cacheUrl"),
             )
             for note in notes:
                 note_id = str(note.get("id"))
@@ -171,35 +172,28 @@ def crawl_scenario(
         detail_error = None
 
         if cfg.require_note_detail and detail_budget > 0:
-            token = search_note.get("xsec_token")
-            if not token:
-                detail_error = "missing_xsec_token"
-                detail_failed += 1
-                _log(log_path, "detail_skip", note_id=note_id, reason=detail_error)
-            else:
-                detail_budget -= 1
-                try:
-                    detail_resp = client.note_detail(
-                        note_id=note_id, xsec_token=str(token)
-                    )
-                    detail_note = extract_note_from_detail_body(detail_resp.get("body"))
-                    if not detail_note:
-                        detail_error = "detail_empty_or_biz_error"
-                        detail_failed += 1
-                        _log(
-                            log_path,
-                            "detail_failed",
-                            note_id=note_id,
-                            reason=detail_error,
-                            body_snippet=str(detail_resp.get("body"))[:300],
-                        )
-                    else:
-                        detail_ok += 1
-                        _log(log_path, "detail_ok", note_id=note_id)
-                except Exception as exc:  # noqa: BLE001
-                    detail_error = f"detail_exception:{exc}"
+            detail_budget -= 1
+            try:
+                detail_resp = client.note_detail(note_id=note_id)
+                _log(log_path, "detail_response", note_id=note_id, meta=detail_resp.get("meta"), raw_body=detail_resp.get("body"), cache_url=detail_resp.get("cacheUrl"))
+                detail_note = extract_note_from_detail_body(detail_resp.get("body"), expected_note_id=note_id)
+                if not detail_note:
+                    detail_error = "detail_empty_or_biz_error"
                     detail_failed += 1
-                    _log(log_path, "detail_failed", note_id=note_id, reason=detail_error)
+                    _log(
+                        log_path,
+                        "detail_failed",
+                        note_id=note_id,
+                        reason=detail_error,
+                        body_snippet=str(detail_resp.get("body"))[:300],
+                    )
+                else:
+                    detail_ok += 1
+                    _log(log_path, "detail_ok", note_id=note_id)
+            except Exception as exc:  # noqa: BLE001
+                detail_error = f"detail_exception:{exc}"
+                detail_failed += 1
+                _log(log_path, "detail_failed", note_id=note_id, reason=detail_error)
         elif cfg.require_note_detail and detail_budget <= 0:
             detail_error = "detail_budget_exhausted"
 

@@ -84,77 +84,63 @@ def normalize_note_card(card: dict[str, Any], *, fallback_id: str | None = None)
         "xsec_token": _pick(card.get("xsec_token")),
         "user": user,
         "tag_list": card.get("tag_list"),
-        "image_list": card.get("image_list"),
+        "image_list": _pick(card.get("image_list"), card.get("images_list")),
         "_source": "note_card",
         "_raw_note_card": card,
     }
 
 
-def extract_note_from_detail_body(body: dict[str, Any] | None) -> dict[str, Any] | None:
-    """从 TikHub note_detail 响应 body 中抽出 note 对象；失败返回 None。
+def _provider_body_valid(body: Any) -> bool:
+    if not isinstance(body, dict):
+        return False
+    for container in (body, body.get("data"), (body.get("data") or {}).get("data") if isinstance(body.get("data"), dict) else None):
+        if not isinstance(container, dict):
+            continue
+        if container.get("success") is False or container.get("ok") is False or container.get("error"):
+            return False
+        for name in ("code", "status_code"):
+            value = container.get(name)
+            if value is not None and str(value) not in {"0", "200"}:
+                return False
+    return True
 
-    兼容形态：
-    - 旧：data.data.detail.note / note_info（含 id）
-    - 新 web_v3：data.data.items[].note_card（含 note_id / desc / interact_info）
-    """
-    if not body:
-        return None
-    data = body.get("data")
-    if not isinstance(data, dict):
-        return None
-    # 业务失败常见：data.data is null，或 ok/success 为假且无 items
-    inner = data.get("data")
-    if inner is None:
-        return None
-    if not isinstance(inner, dict):
+
+def extract_note_from_detail_body(body: dict[str, Any] | None, *, expected_note_id: str | None = None) -> dict[str, Any] | None:
+    """Read current App V2 note_list and historical Web cards without inventing IDs."""
+    if not _provider_body_valid(body):
         return None
 
-    # web_v3: items[].note_card
-    items = inner.get("items")
-    if isinstance(items, list) and items:
-        first = items[0] if isinstance(items[0], dict) else None
-        if first:
-            card = first.get("note_card") if isinstance(first.get("note_card"), dict) else None
-            if card:
-                normalized = normalize_note_card(
-                    card, fallback_id=_pick(first.get("id"), first.get("note_id"))
-                )
-                if normalized.get("id"):
-                    return normalized
-            # 偶发直接把 note 放在 item 上
-            if first.get("id") or first.get("note_id") or first.get("desc"):
-                if first.get("note_id") and not first.get("id"):
-                    return normalize_note_card(first, fallback_id=first.get("note_id"))
-                if first.get("id"):
-                    return first
+    def candidates(value: Any, fallback_id: str | None = None):
+        if isinstance(value, list):
+            for item in value:
+                yield from candidates(item)
+            return
+        if not isinstance(value, dict):
+            return
+        identity = _pick(value.get("id"), value.get("note_id"), fallback_id)
+        if identity and any(value.get(key) for key in ("desc", "description", "title", "display_title", "images_list", "image_list", "video_info_v2", "video")):
+            yield {**value, **normalize_note_card(value, fallback_id=str(identity))}
+        for key in ("data", "note_list", "notes", "items", "note_card", "note", "note_info", "detail"):
+            nested = value.get(key)
+            if isinstance(nested, (dict, list)):
+                yield from candidates(nested, str(identity) if identity and key == "note_card" else None)
 
-    note = (
-        (inner.get("detail") or {}).get("note")
-        if isinstance(inner.get("detail"), dict)
-        else None
-    )
-    if not note and isinstance(inner.get("detail"), dict):
-        note = inner["detail"].get("note_info") or inner.get("detail")
-    if not note:
-        note = inner.get("note")
-    if isinstance(note, dict):
-        if note.get("id"):
-            return note
-        if note.get("note_id") or note.get("desc"):
-            return normalize_note_card(note)
-    return None
+    notes = list(candidates(body.get("data")))
+    if expected_note_id is not None:
+        return next((note for note in notes if note.get("id") == str(expected_note_id)), None)
+    return notes[0] if notes else None
 
 
 def extract_notes_from_search_body(body: dict[str, Any] | None) -> list[dict[str, Any]]:
-    if not body:
-        return []
+    if not _provider_body_valid(body):
+        raise ValueError("小红书搜索返回业务错误或无效数据")
     data = body.get("data")
     if not isinstance(data, dict):
-        return []
+        raise ValueError("小红书搜索缺少响应数据")
     inner = data.get("data") if isinstance(data.get("data"), dict) else data
     items = inner.get("items") if isinstance(inner, dict) else None
     if not isinstance(items, list):
-        return []
+        raise ValueError("小红书搜索未返回可识别的笔记列表")
     notes: list[dict[str, Any]] = []
     for item in items:
         if not isinstance(item, dict):

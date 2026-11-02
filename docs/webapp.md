@@ -35,7 +35,7 @@ related:
 
 ## 功能
 
-- **配置**：TikHub Token、DeepSeek Key、模型选择、Cloudflare API Token
+- **配置**：TikHub 主服务授权状态与自动并发、DeepSeek Key、模型选择、Cloudflare API Token
 - **用户管理**：增删 Access 允许邮箱（同步训练场 + App Launcher）
 - **爬取**：自定义关键词，只爬帖子（搜索 + note_detail），不爬评论
 - **判断 / 评论库**：DeepSeek 初判 → 映射「有意向/没意向」入库；可开人工纠错开关写回纠错记录
@@ -43,6 +43,8 @@ related:
 ## 启动
 
 LaunchAgent：`com.lh.xhs-agent-test-webapp`（KeepAlive）
+
+TikHub 采集经本机主服务统一调用。服务环境配置 `TIKHUB_GATEWAY_URL=http://127.0.0.1:3000` 和 `TIKHUB_GATEWAY_TOKEN`（与主服务 `INTERNAL_API_TOKEN` 同值）；服务授权保留在本机环境，不在网页编辑或显示。笔记详情使用 App V2，不要求搜索结果提供 xsec_token。网关负责最新端点、自动限流、共享并发、重试和费用记录，训练场不再独立直连 TikHub。
 
 ```bash
 launchctl print gui/$(id -u)/com.lh.xhs-agent-test-webapp

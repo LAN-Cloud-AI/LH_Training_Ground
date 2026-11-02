@@ -45,9 +45,6 @@ def _startup() -> None:
 
 
 class ConfigUpdate(BaseModel):
-    tikhub_api_token: str | None = None
-    tikhub_base_url: str | None = None
-    tikhub_rpm: int | None = None
     deepseek_api_key: str | None = None
     deepseek_model: str | None = None
     deepseek_base_url: str | None = None

@@ -165,8 +165,8 @@
     <section id="tab-config" class="panel">
       <div class="grid">
         <div>
-          <label>TikHub API Token</label>
-          <input id="tikhub_token" type="password" placeholder="粘贴 token" />
+          <label>TikHub 调用</label>
+          <div class="muted">由主服务统一授权，自动同步接口与并发额度。</div>
           <div class="muted" id="tikhub_mask" style="margin-top:6px;font-size:12px;"></div>
         </div>
         <div>
@@ -179,8 +179,8 @@
           <select id="deepseek_model"></select>
         </div>
         <div>
-          <label>TikHub RPM</label>
-          <input id="tikhub_rpm" type="number" min="1" max="120" value="30" />
+          <label>TikHub 并发</label>
+          <div class="muted">自动调节，无需手工设置。</div>
         </div>
         <div>
           <label>Cloudflare API Token（用户管理 / Access）</label>
@@ -490,8 +490,7 @@
         opt.value = cfg.deepseek_model; opt.textContent = cfg.deepseek_model; opt.selected = true;
         sel.appendChild(opt);
       }
-      $('tikhub_rpm').value = cfg.tikhub_rpm || 30;
-      $('tikhub_mask').textContent = cfg.tikhub_api_token_set ? `已配置：${cfg.tikhub_api_token_masked}` : '未配置';
+      $('tikhub_mask').textContent = cfg.tikhub_gateway_configured ? '主服务已授权 · 自动调节' : '等待主服务授权';
       $('deepseek_mask').textContent = cfg.deepseek_api_key_set ? `已配置：${cfg.deepseek_api_key_masked}` : '未配置';
       $('cloudflare_mask').textContent = cfg.cloudflare_api_token_set
         ? `已配置：${cfg.cloudflare_api_token_masked}`
@@ -515,14 +514,11 @@
       $('config_status').textContent = '保存中…';
       try {
         const body = {
-          tikhub_rpm: Number($('tikhub_rpm').value || 30),
           deepseek_model: $('deepseek_model').value,
         };
-        if ($('tikhub_token').value.trim()) body.tikhub_api_token = $('tikhub_token').value.trim();
         if ($('deepseek_key').value.trim()) body.deepseek_api_key = $('deepseek_key').value.trim();
         if ($('cloudflare_token').value.trim()) body.cloudflare_api_token = $('cloudflare_token').value.trim();
         await api('/api/config', { method: 'PUT', body: JSON.stringify(body) });
-        $('tikhub_token').value = '';
         $('deepseek_key').value = '';
         $('cloudflare_token').value = '';
         await loadConfig();

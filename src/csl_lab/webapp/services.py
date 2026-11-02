@@ -20,13 +20,9 @@ from csl_lab.webapp.intent import map_agent_intent
 
 def _client_from_config() -> TikHubClient:
     cfg = load_config()
-    token = cfg.get("tikhub_api_token") or ""
-    if not token:
-        raise RuntimeError("请先在配置页填写 TikHub API Token")
     return TikHubClient(
-        token=token,
-        base_url=cfg.get("tikhub_base_url") or "https://api.tikhub.io",
-        rpm=int(cfg.get("tikhub_rpm") or 30),
+        gateway_url=cfg.get("tikhub_gateway_url") or "http://127.0.0.1:3000",
+        gateway_token=cfg.get("tikhub_gateway_token") or "",
     )
 
 

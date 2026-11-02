@@ -145,11 +145,9 @@ def main(argv: list[str] | None = None) -> int:
             from csl_lab.crawl import crawl_scenario
             from csl_lab.crawl.tikhub_client import TikHubClient
 
-            token = os.getenv("TIKHUB_API_TOKEN", "")
             client = TikHubClient(
-                token=token,
-                base_url=os.getenv("TIKHUB_BASE_URL", "https://api.tikhub.io"),
-                rpm=int(os.getenv("TIKHUB_RPM", "20") or 20),
+                gateway_url=os.getenv("TIKHUB_GATEWAY_URL", "http://127.0.0.1:3000"),
+                gateway_token=os.getenv("TIKHUB_GATEWAY_TOKEN", ""),
             )
             keywords = (
                 [k.strip() for k in args.keywords.split(",") if k.strip()]

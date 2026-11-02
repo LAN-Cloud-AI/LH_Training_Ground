@@ -50,10 +50,10 @@ related:
 ## 快速开始
 
 ```bash
-cd /Users/i/myCode/LH_Training_Ground   # 或 git clone 后的路径
+cd /Users/i/mycode/LAN-Cloud/LH_Training_Ground   # 或 git clone 后的路径
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
-cp .env.example .env   # 填入 TikHub / DeepSeek（勿覆盖生产 agent/.env.local）
+cp .env.example .env   # 配置主服务调用授权 / DeepSeek（勿覆盖生产 agent/.env.local）
 
 csl-lab list-products --scenario new_car
 csl-lab dry-run --scenario new_car --product mona_l03
@@ -68,6 +68,8 @@ csl-lab crawl --scenario used_car --product your_used_sku
 ```
 
 Web 控制台：
+
+TikHub 调用统一经过本机主服务 `TIKHUB_GATEWAY_URL`（默认 `http://127.0.0.1:3000`）；`TIKHUB_GATEWAY_TOKEN` 由服务环境注入，与主服务的 `INTERNAL_API_TOKEN` 一致。接口版本、限流、并发和重试由主服务自动管理，训练场不再使用独立 TikHub Token 或手工 RPM。未授权或网关不可用时采集会失败，不会改走收费直连；`--fixture` 仍可离线运行。
 
 ```bash
 ./scripts/run-webapp.sh
