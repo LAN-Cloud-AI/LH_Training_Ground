@@ -110,3 +110,8 @@ TikHub 调用统一经过本机主服务 `TIKHUB_GATEWAY_URL`（默认 `http://1
 ```bash
 pytest -q
 ```
+## CI 与候选分支
+
+候选源码在 `beta` 分支提交，保留 `main` 的正式集成边界。GitHub Actions 在 push、PR、手动触发时运行完整 `pytest` 和启动脚本语法检查，按 `pyproject.toml` 缓存 pip 下载；非标签的过时运行可取消，发行标签运行保留。
+
+本项目组件独立于 Earth 产品版本。历史 `training-ground-v1.0.0` 标签的包元数据实际为 `0.1.0`；本轮不移动标签或重发产物，再次发布前须先按发行规范对齐标签与包版本。
