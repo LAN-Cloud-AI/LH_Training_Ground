@@ -14,9 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_release_version_matches_package_and_api():
-    match = re.fullmatch(r"(\d+\.\d+\.\d+)-beta\.(\d+)", RELEASE_VERSION)
-    assert match, "Beta releases must use the component SemVer beta.N convention"
-    python_version = f"{match[1]}b{match[2]}"
+    match = re.fullmatch(r"(\d+\.\d+\.\d+)(?:-beta\.(\d+))?", RELEASE_VERSION)
+    assert match, "Releases must use component SemVer, with an optional beta.N suffix"
+    python_version = match[1] if match[2] is None else f"{match[1]}b{match[2]}"
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     lock = tomllib.loads((ROOT / "uv.lock").read_text())
     package = next(package for package in lock["package"] if package["name"] == "csl-lab")
